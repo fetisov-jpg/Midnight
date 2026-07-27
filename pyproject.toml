@@ -1,0 +1,26 @@
+[project]
+name = "midnight"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "aiohttp>=3.14.2",
+    "alembic>=1.18.5",
+    "asyncpg>=0.31.0",
+    "fastapi>=0.139.0",
+    "pandas>=3.0.3",
+    "psycopg2-binary>=2.9.12",
+    "python-dotenv>=1.2.2",
+    "sqlalchemy>=2.0.51",
+    "streamlit>=1.59.2",
+    "uvicorn>=0.51.0",
+    "websockets>=16.1.1",
+]
+[tool.uv.scripts]
+start = "uvicorn src.main:app --host 0.0.0.0 --port 8000"
+dev = "uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload"
+test = "pytest tests/"
+format = "black src/ tests/"
+lint = "ruff check src/ tests/"
+shell = "ipython"
