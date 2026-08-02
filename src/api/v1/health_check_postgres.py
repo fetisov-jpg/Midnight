@@ -9,7 +9,10 @@ from src.repositories.check_postgres import (
     get_databases,
     get_transactions,
     get_table_indexes,
-    get_schema_indexes
+    get_schema_indexes,
+    get_extensions,
+    get_all_views,
+    get_all_materialized_views
 )
 
 router = APIRouter(
@@ -103,3 +106,22 @@ async def get_schema_indexes_pg():
         return await get_schema_indexes()
     except Exception as e:
         return {"status": "error", "message": str(e)}
+@router.get("/extensions")
+async def get_extensions_pg():
+    try:
+        return await get_extensions()
+    except Exception as e:
+        return {"status":"error","message":str(e)}
+
+@router.get("/views")
+async def get_all_views_pg():
+    try:
+        return await get_all_views()
+    except Exception as e:
+        return {"status":"error","message":str(e)}
+@router.get("/materialized_views")
+async def get_all_materialized_views_pg():
+    try:
+        return await get_all_materialized_views()
+    except Exception as e:
+        return {"status":"error","message":str(e)}

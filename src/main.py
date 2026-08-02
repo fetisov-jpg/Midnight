@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
+
 from src.api.v1 import health_check_postgres
 
 app = FastAPI(
@@ -12,6 +14,13 @@ app = FastAPI(
 # Подключаем роутер с префиксом /api/v1
 app.include_router(health_check_postgres, prefix="/api/v1")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8080", "http://127.0.0.1:8080"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 @app.get("/")
 async def root():
     return {"message": "Welcome to Midnight API"}
