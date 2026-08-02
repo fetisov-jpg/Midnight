@@ -87,6 +87,42 @@ async def get_schema_indexes():
     finally:
         await conn.close()
 
+async def get_extensions():
+    conn = await get_db_conn()
+    try:
+        rows = await conn.fetch("""SELECT * FROM pg_extensions;""")
+        return {"extensions":request_to_dict(rows)}
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        await conn.close()
+
+async def get_all_views():
+    conn = await get_db_conn()
+    try:
+        rows = await conn.fetch(
+            """SELECT 
+    schemaname,
+    viewname,
+    viewowner,
+    definition
+    FROM pg_views
+    WHERE schemaname = 'public'
+    ORDER BY viewname;""")
+        return {"views":request_to_dict(rows=rows)}
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        await conn.close()
+async def get_all_materialized_views(): 
+    conn = await get_db_conn()
+    try: 
+        rows = await conn.fetch("""SELECT * FROM pg_matviews ORDER BY schemaname, matviewname;""")
+        return {"materialized_views":request_to_dict(rows)}
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        await conn.close()
 def request_to_dict(rows):
     requests_list = [dict(row) for row in rows]
     return requests_list
