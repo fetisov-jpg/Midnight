@@ -1,0 +1,16 @@
+.git
+.gitignore
+.venv
+.continue
+.ruff_cache
+.pytest_cache
+__pycache__
+*.pyc
+*.pyo
+connections.json
+.env
+.env.*
+tests
+docs
+.idea
+*.log
