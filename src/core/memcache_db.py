@@ -9,13 +9,12 @@ _memcache_client: aiomcache.Client | None = None
 async def get_memcache_conn() -> aiomcache.Client:
     """Получает подключение к Memcached"""
     global _memcache_client
-    
+
     if _memcache_client is None:
         _memcache_client = aiomcache.Client(
-            host=memcache_config.host,
-            port=memcache_config.port
+            host=memcache_config.host, port=memcache_config.port
         )
-    
+
     return _memcache_client
 
 

@@ -4,6 +4,9 @@
 .env.local
 .env.*
 
+# Runtime state (persisted connection registry)
+connections.json
+
 # Dependencies
 .venv/
 venv/

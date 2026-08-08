@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 
 class Model(ABC):
-    def __init__(self,name,surname,login,password):
+    def __init__(self, name, surname, login, password):
         self._name = name
         self._surname = surname
         self._login = login
@@ -13,7 +13,7 @@ class Model(ABC):
         return self._name
 
     @name.setter
-    def name (self, value:str) -> None:
+    def name(self, value: str) -> None:
         self._name = value
 
     @property
@@ -21,23 +21,23 @@ class Model(ABC):
         return self._surname
 
     @surname.setter
-    def surname(self,value:str) -> None:
+    def surname(self, value: str) -> None:
         self._surname = value
 
     @property
-    def login(self) ->str:
+    def login(self) -> str:
         return self._login
 
     @login.setter
-    def login(self,value:str)->None:
+    def login(self, value: str) -> None:
         self._login = value
 
     @property
-    def password(self) ->str:
+    def password(self) -> str:
         return self._password
 
     @password.setter
-    def password(self,value:str)->None:
+    def password(self, value: str) -> None:
         self._password = value
 
     @abstractmethod
@@ -46,5 +46,5 @@ class Model(ABC):
             "name": self.name,
             "surname": self.surname,
             "login": self.login,
-            "password": self.password
+            "password": self.password,
         }

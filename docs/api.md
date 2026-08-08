@@ -16,21 +16,27 @@
 
 ### `GET /`
 
-Карта доступных групп эндпоинтов.
+Веб-дашборд мониторинга (HTML). Данные стримятся через
+`/ws/stats`.
 
-**Ответ 200**
+## WebSocket: `/ws/stats`
+
+Стрим статистики всех баз данных. Сервер отправляет JSON
+каждые 3 секунды.
+
+**Формат сообщения**
 
 ```json
 {
-  "message": "Welcome to Midnight API",
-  "endpoints": {
-    "postgres": "/api/v1/postgres",
-    "redis": "/api/v1/redis",
-    "memcache": "/api/v1/memcache",
-    "docs": "/docs"
-  }
+  "postgresql": {"status": "connected", "metrics": {"version": "...", "active_connections": 5, "latency_ms": 12.3}},
+  "redis": {"status": "connected", "metrics": {"version": "7.x.y", "uptime_seconds": 123, "used_memory_human": "1.2M", "connected_clients": 7, "db_size": 42, "latency_ms": 1.1}},
+  "memcached": {"status": "connected", "metrics": {"uptime": 1000, "curr_items": 5, "curr_connections": 2, "get_hits": 100, "get_misses": 5, "latency_ms": 0.9}},
+  "mongodb": {"status": "connected", "metrics": {"version": "8.x", "uptime_seconds": 100, "connections": 3, "latency_ms": 8.4}}
 }
 ```
+
+При недоступности БД секция имеет вид
+`{"status": "error", "message": "<текст исключения>", "metrics": {"latency_ms": 0.0}}`.
 
 ---
 

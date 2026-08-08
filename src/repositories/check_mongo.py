@@ -1,18 +1,19 @@
-from src.core.mongo_db import get_mongo_conn, get_mongo_config
+from src.core.mongo_db import get_mongo_config, get_mongo_conn
 
 
-async def check_mongo_info():
+async def check_mongo_info(client=None, config=None):
     """Получает статистику MongoDB"""
     try:
-        client = await get_mongo_conn()
+        client = client or await get_mongo_conn()
+        cfg = config or get_mongo_config()
         server_status = await client.admin.command("serverStatus")
 
         return {
             "status": "connected",
             "config": {
-                "host": get_mongo_config().host,
-                "port": get_mongo_config().port,
-                "database": get_mongo_config().database,
+                "host": cfg.host,
+                "port": cfg.port,
+                "database": cfg.database,
             },
             "info": {
                 "version": server_status.get("version"),
@@ -35,10 +36,10 @@ async def check_mongo_info():
         }
 
 
-async def check_mongo_databases():
+async def check_mongo_databases(client=None):
     """Получает список баз данных MongoDB"""
     try:
-        client = await get_mongo_conn()
+        client = client or await get_mongo_conn()
         databases = await client.list_database_names()
 
         return {
@@ -52,11 +53,12 @@ async def check_mongo_databases():
         }
 
 
-async def check_mongo_db_stats():
-    """Получает статистику текущей базы данных MongoDB"""
+async def check_mongo_db_stats(client=None, config=None):
+    """Получает статистику базы данных MongoDB"""
     try:
-        client = await get_mongo_conn()
-        db_name = get_mongo_config().database
+        client = client or await get_mongo_conn()
+        cfg = config or get_mongo_config()
+        db_name = cfg.database
         db_stats = await client[db_name].command("dbStats")
 
         return {
