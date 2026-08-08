@@ -6,23 +6,126 @@ from src.core.connection_manager import get_client
 from src.core.registry import ConnectionConfig, get_registry
 from src.repositories.check_cache_dbs import check_memcache_stats, check_redis_info
 from src.repositories.check_mongo import check_mongo_info
-from src.repositories.check_postgres import check_requests, check_version
+from src.repositories.check_postgres import (
+    get_active_requests,
+    get_connection_summary,
+    get_db_size,
+    get_index_usage,
+    get_most_used_tables,
+    get_server_version,
+    get_table_tree,
+)
+
+
+def _fmt_duration(seconds):
+    if seconds is None:
+        return None
+    return f"{float(seconds):.2f} с"
+
+
+def _fmt_size_bytes(size_bytes):
+    if size_bytes is None:
+        return None
+    value = float(size_bytes)
+    for unit in ("Б", "КБ", "МБ", "ГБ", "ТБ"):
+        if value < 1024 or unit == "ТБ":
+            return f"{value:.1f} {unit}"
+        value /= 1024
+
+
+def _pick(rows, columns, formatters=None):
+    """Преобразует список словарей в {columns, rows} для таблицы на фронте"""
+    if isinstance(rows, BaseException):
+        return {"columns": columns, "rows": [], "error": str(rows)}
+    formatters = formatters or {}
+    out_rows = []
+    for record in rows:
+        row = []
+        for col in columns:
+            value = record.get(col)
+            if isinstance(value, str):
+                value = " ".join(value.split())
+            fmt = formatters.get(col)
+            if fmt and value is not None:
+                value = fmt(value)
+            row.append(value)
+        out_rows.append(row)
+    return {"columns": columns, "rows": out_rows}
 
 
 async def _collect_postgres(client) -> dict[str, Any]:
     """Собирает статистику подключения PostgreSQL"""
     start = time.perf_counter()
     try:
-        version = await check_version(client)
-        requests = await check_requests(client)
-        requests = requests if isinstance(requests, list) else []
+        version, summary, requests, index_usage, top_tables, tree, db_size = (
+            await asyncio.gather(
+                get_server_version(client),
+                get_connection_summary(client),
+                get_active_requests(client),
+                get_index_usage(client),
+                get_most_used_tables(client),
+                get_table_tree(client),
+                get_db_size(client),
+                return_exceptions=True,
+            )
+        )
         latency = round((time.perf_counter() - start) * 1000, 2)
+
+        summary_data = {} if isinstance(summary, BaseException) else summary
+        metrics = {
+            "version": version.get("version") if isinstance(version, dict) else None,
+            "client_connections": summary_data.get("total"),
+            "active_queries": summary_data.get("active"),
+            "db_size_bytes": (
+                db_size.get("db_size_bytes") if isinstance(db_size, dict) else None
+            ),
+            "latency_ms": latency,
+        }
         return {
             "status": "connected",
-            "metrics": {
-                "version": version.get("version"),
-                "active_connections": len(requests),
-                "latency_ms": latency,
+            "metrics": metrics,
+            "tables": {
+                "active_requests": _pick(
+                    requests,
+                    [
+                        "pid",
+                        "usename",
+                        "application_name",
+                        "state",
+                        "duration_s",
+                        "query",
+                    ],
+                    {"duration_s": _fmt_duration},
+                ),
+                "index_usage": _pick(
+                    index_usage,
+                    [
+                        "schemaname",
+                        "table_name",
+                        "index_name",
+                        "idx_scan",
+                        "idx_tup_read",
+                        "idx_tup_fetch",
+                    ],
+                ),
+                "top_tables": _pick(
+                    top_tables,
+                    [
+                        "schemaname",
+                        "table_name",
+                        "seq_scan",
+                        "idx_scan",
+                        "n_tup_ins",
+                        "n_tup_upd",
+                        "n_tup_del",
+                        "n_live_tup",
+                    ],
+                ),
+                "table_tree": _pick(
+                    tree,
+                    ["table_name", "column_count", "total_size_bytes", "columns"],
+                    {"total_size_bytes": _fmt_size_bytes},
+                ),
             },
         }
     except Exception as exc:
@@ -54,6 +157,7 @@ async def _collect_redis(client) -> dict[str, Any]:
                 "version": metrics.get("redis_version"),
                 "uptime_seconds": metrics.get("uptime_in_seconds"),
                 "used_memory_human": metrics.get("used_memory_human"),
+                "used_memory_bytes": metrics.get("used_memory"),
                 "connected_clients": metrics.get("connected_clients"),
                 "db_size": info.get("db_size"),
                 "latency_ms": latency,
@@ -91,6 +195,7 @@ async def _collect_memcache(client) -> dict[str, Any]:
                 "curr_connections": metrics.get("curr_connections"),
                 "get_hits": metrics.get("get_hits"),
                 "get_misses": metrics.get("get_misses"),
+                "used_bytes": metrics.get("bytes"),
                 "latency_ms": latency,
             },
         }
@@ -171,10 +276,16 @@ async def collect_all_stats() -> dict[str, Any]:
             payload[conn.id] = {
                 "type": conn.type,
                 "name": conn.name,
+                "description": conn.description,
                 "status": "error",
                 "message": str(result),
                 "metrics": {},
             }
         else:
-            payload[conn.id] = {"type": conn.type, "name": conn.name, **result}
+            payload[conn.id] = {
+                "type": conn.type,
+                "name": conn.name,
+                "description": conn.description,
+                **result,
+            }
     return payload

@@ -11,6 +11,7 @@ from src.core.registry import (
     ConnectionConfig,
     get_registry,
 )
+from src.services.details_collector import collect_connection_details
 from src.services.stats_collector import collect_connection_stats
 
 router = APIRouter(prefix="/connections", tags=["connections"])
@@ -24,6 +25,7 @@ class ConnectionCreate(BaseModel):
     user: str | None = None
     password: str | None = None
     database: str | None = None
+    description: str | None = None
 
 
 @router.get("/")
@@ -51,6 +53,7 @@ async def create_connection(payload: ConnectionCreate) -> dict:
         user=payload.user,
         password=payload.password,
         database=payload.database or DEFAULT_DATABASES.get(payload.type),
+        description=payload.description,
     )
     get_registry().add(config)
     return config.to_dict(include_password=False)
@@ -70,3 +73,11 @@ async def test_connection(connection_id: str) -> dict:
     if config is None:
         raise HTTPException(status_code=404, detail="Connection not found")
     return await collect_connection_stats(config)
+
+
+@router.get("/{connection_id}/details")
+async def connection_details(connection_id: str) -> dict:
+    config = get_registry().get(connection_id)
+    if config is None:
+        raise HTTPException(status_code=404, detail="Connection not found")
+    return await collect_connection_details(config)

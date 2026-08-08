@@ -32,17 +32,26 @@ async def _create_client(config: ConnectionConfig) -> Any:
             database=config.database or "postgres",
             min_size=0,
             max_size=5,
+            timeout=5,
+            server_settings={"application_name": "midnight-monitor"},
         )
     if config.type == "redis":
         return aioredis.from_url(
             _redis_url(config),
             encoding="utf-8",
             decode_responses=True,
+            socket_connect_timeout=3,
+            socket_timeout=3,
         )
     if config.type == "memcache":
-        return aiomcache.Client(host=config.host, port=config.port)
+        return aiomcache.Client(host=config.host, port=config.port, pool_size=1)
     if config.type == "mongo":
-        return AsyncIOMotorClient(_mongo_uri(config))
+        return AsyncIOMotorClient(
+            _mongo_uri(config),
+            serverSelectionTimeoutMS=3000,
+            connectTimeoutMS=3000,
+            socketTimeoutMS=3000,
+        )
     raise ValueError(f"Unsupported connection type: {config.type}")
 
 

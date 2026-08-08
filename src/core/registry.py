@@ -34,6 +34,7 @@ class ConnectionConfig:
     user: str | None = None
     password: str | None = None
     database: str | None = None
+    description: str | None = None
 
     def to_dict(self, include_password: bool = False) -> dict:
         data = asdict(self)
