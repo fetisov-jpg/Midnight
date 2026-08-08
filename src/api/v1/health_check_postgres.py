@@ -1,6 +1,8 @@
+from builtins import Exception
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from src.core.database import get_db_conn
+from src.core.database import get_db_conn_pg
 from src.repositories.check_postgres import (
     check_version,
     check_requests,
@@ -16,7 +18,7 @@ from src.repositories.check_postgres import (
 )
 
 router = APIRouter(
-    prefix="/postgres",  # ← Изменено с "/v1/postgres" на "/postgres"
+    prefix="/postgres",  
     tags=["postgres"]
 )
 
@@ -31,7 +33,7 @@ def ping():
 @router.get("/db-test")
 async def test_db():
     try:
-        conn = await get_db_conn()
+        conn = await get_db_conn_pg()
         await conn.close()
         return {"status": "ok", "message": "Database connected"}
     except Exception as e:
@@ -86,7 +88,7 @@ async def get_table_endpoint(
         return {"status": "error", "message": str(e)}
 async def get_table_data(table_name: str, limit: int = 100):
     """Получает данные из указанной таблицы"""
-    conn = await get_db_conn()
+    conn = await get_db_conn_pg()
     try:
         # Получаем данные
         rows = await conn.fetch(f"SELECT * FROM {table_name} LIMIT {limit}")

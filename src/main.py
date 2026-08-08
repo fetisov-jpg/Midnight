@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from src.api.v1 import health_check_postgres
+from src.api.v1.health_check_postgres import router as health_check_postgres
+from src.api.v1.health_check_mongo import router as health_check_mongo
 
 app = FastAPI(
     title="Midnight",
@@ -13,6 +14,7 @@ app = FastAPI(
 
 # Подключаем роутер с префиксом /api/v1
 app.include_router(health_check_postgres, prefix="/api/v1")
+app.include_router(health_check_mongo, prefix="/api/v1")
 
 app.add_middleware(
     CORSMiddleware,

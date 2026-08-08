@@ -13,3 +13,9 @@ async def get_hello_from_mongo():
     client = await get_db_conn_mongo()
     db = client.testdb
     return {"message": "Hello from MongoDB", "database": "testdb"}
+@router.get("/databases")
+async def get_databases_from_mongo():
+    client = await get_db_conn_mongo()
+    db = client.aconnect()
+    db.send("show collections")
+    return {"databases:",db}
