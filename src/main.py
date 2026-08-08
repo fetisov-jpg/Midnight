@@ -1,10 +1,12 @@
-from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
+import asyncio
+import json
+import os
+from typing import Dict, Any
 
-from src.api.v1.postgres_routes import router as postgres_router
-from src.api.v1.cache_routes import router as redis_router, memcache_router as memcache_router
-from src.core.redis_db import close_redis
-from src.core.memcache_db import close_memcache
+from fastapi import FastAPI, WebSocket, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 app = FastAPI(
     title="Midnight",
