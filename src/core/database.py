@@ -1,26 +1,20 @@
 import asyncpg
-from dotenv import load_dotenv
-import os
-print("Current dir:", os.getcwd())
-print(".env exists:", os.path.exists(".env"))
+from src.core.config import PostgresConfig
 
-# Явно указываем путь к .env для уверенности
-load_dotenv(dotenv_path=".env")
-load_dotenv()
-
-# Просто читаем переменные один раз при импорте
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT")
-DB_USER = os.getenv("DB_USER")
-DB_PASS = os.getenv("DB_PASS")
-DB_NAME = os.getenv("DB_NAME")
+# Создаем конфигурацию один раз при импорте
+postgres_config = PostgresConfig.from_env()
 
 async def get_db_conn():
     connection = await asyncpg.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        user=DB_USER,
-        password=DB_PASS,
-        database=DB_NAME
+        host=postgres_config.host,
+        port=postgres_config.port,
+        user=postgres_config.user,
+        password=postgres_config.password,
+        database=postgres_config.database
     )
     return connection
+
+
+def get_postgres_config() -> PostgresConfig:
+    """Возвращает текущую конфигурацию PostgreSQL"""
+    return postgres_config
