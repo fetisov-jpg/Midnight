@@ -52,6 +52,43 @@ uv run dev
 uv run start
 ```
 
+## Веб-дашборд
+
+После запуска откройте в браузере `http://localhost:8000` — встроенный
+дашборд в реальном времени показывает статус и метрики всех БД
+(PostgreSQL, Redis, Memcached, MongoDB).
+
+Данные стримятся по WebSocket `ws://localhost:8000/ws/stats`:
+каждые 3 секунды сервер отправляет JSON со статистикой всех баз
+параллельно. При разрыве соединения дашборд переподключается
+автоматически.
+
+## Подключения к БД
+
+Каждое подключение — это независимая запись в реестре. Добавлять
+и удалять подключения можно через веб-дашборд («Добавить БД») или
+через REST API. Записи персистятся в файл `connections.json`
+(в корне проекта, в git не попадает). При старте реестр
+засевается подключениями из переменных окружения (см. ниже).
+
+Если файла `connections.json` нет — при первом запуске будут
+созданы 4 подключения по умолчанию (localhost для каждого типа БД).
+
+### API подключений
+
+- `GET /api/v1/connections/` — список всех подключений (пароль никогда не возвращается)
+- `POST /api/v1/connections/` — создать подключение
+- `DELETE /api/v1/connections/{id}` — удалить подключение
+- `GET /api/v1/connections/{id}/test` — проверка доступности
+
+Пример создания:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/connections/ \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Prod PG","type":"postgres","host":"localhost","port":5432,"user":"postgres","password":"secret","database":"postgres"}'
+```
+
 ## API Endpoints
 
 ### PostgreSQL
@@ -91,6 +128,12 @@ uv run start
 - `GET /api/v1/mongo/databases` - список баз данных MongoDB
 - `GET /api/v1/mongo/stats` - статистика базы данных MongoDB
 
+### Подключения
+- `GET /api/v1/connections/` - список подключений
+- `POST /api/v1/connections/` - создать подключение
+- `DELETE /api/v1/connections/{id}` - удалить подключение
+- `GET /api/v1/connections/{id}/test` - тест подключения
+
 ## Документация API
 
 После запуска приложения документация доступна по адресам:
@@ -103,20 +146,27 @@ uv run start
 src/
 ├── api/
 │   └── v1/
-│       ├── postgres_routes.py    # Роуты PostgreSQL
-│       ├── cache_routes.py       # Роуты Redis и Memcached
-│       └── mongo_routes.py       # Роуты MongoDB
+│       ├── postgres_routes.py      # Роуты PostgreSQL
+│       ├── cache_routes.py         # Роуты Redis и Memcached
+│       ├── mongo_routes.py         # Роуты MongoDB
+│       └── connections_routes.py   # CRUD подключений
 ├── core/
-│   ├── config.py                 # Конфигурация всех БД
-│   ├── database.py               # Подключение к PostgreSQL
-│   ├── redis_db.py               # Подключение к Redis
-│   ├── memcache_db.py            # Подключение к Memcached
-│   └── mongo_db.py               # Подключение к MongoDB
+│   ├── config.py                   # Конфигурация env (seed подключений)
+│   ├── registry.py                 # Реестр подключений (JSON-персистенция)
+│   ├── connection_manager.py       # Жизненный цикл клиентов по каждому подключению
+│   ├── database.py                 # Подключение к PostgreSQL
+│   ├── redis_db.py                 # Подключение к Redis
+│   ├── memcache_db.py              # Подключение к Memcached
+│   └── mongo_db.py                 # Подключение к MongoDB
 ├── repositories/
-│   ├── check_postgres.py         # Функции для PostgreSQL
-│   ├── check_cache_dbs.py        # Функции для Redis и Memcached
-│   └── check_mongo.py            # Функции для MongoDB
-└── main.py                       # Точка входа приложения
+│   ├── check_postgres.py           # Функции для PostgreSQL
+│   ├── check_cache_dbs.py          # Функции для Redis и Memcached
+│   └── check_mongo.py              # Функции для MongoDB
+├── services/
+│   └── stats_collector.py          # Сбор статистики по всем подключениям для WS-дашборда
+├── templates/
+│   └── index.html                  # Веб-дашборд мониторинга (управление подключениями)
+└── main.py                         # Точка входа приложения (+ /ws/stats)
 ```
 
 ## Пример использования
@@ -126,8 +176,9 @@ src/
 uv run dev
 ```
 
-2. Откройте браузер и перейдите на http://localhost:8000/docs
+2. Откройте браузер и перейдите на http://localhost:8000 — там веб-дашборд мониторинга
 
-3. Укажите креды баз данных через переменные окружения в `.env` файле
+3. Добавьте подключения через кнопку «Добавить БД» на дашборде либо через
+   переменные окружения в `.env` файле (они засеются при старте)
 
-4. Приложение автоматически соберет статистику и отобразит её через API
+4. Приложение автоматически соберет статистику и отобразит её через API и дашборд

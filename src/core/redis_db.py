@@ -9,14 +9,12 @@ _redis_pool: aioredis.Redis | None = None
 async def get_redis_conn() -> aioredis.Redis:
     """Получает подключение к Redis из пула"""
     global _redis_pool
-    
+
     if _redis_pool is None:
         _redis_pool = aioredis.from_url(
-            redis_config.url,
-            encoding="utf-8",
-            decode_responses=True
+            redis_config.url, encoding="utf-8", decode_responses=True
         )
-    
+
     return _redis_pool
 
 

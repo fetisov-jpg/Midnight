@@ -1,0 +1,22 @@
+models:
+  - title: Qwen Chat
+    provider: ollama
+    model: qwen2.5-coder:7b
+    apiBase: http://localhost:11434
+    contextLength: 32768
+    roles:
+      - chat
+
+tabAutocompleteModel:
+  title: Qwen Autocomplete
+  provider: ollama
+  model: qwen2.5-coder:7b
+  apiBase: http://localhost:11434
+  contextLength: 4096
+
+tabAutocompleteOptions:
+  debounceDelay: 500
+  maxPromptTokens: 2048
+  multilineCompletions: always
+
+allowAnonymousTelemetry: false
