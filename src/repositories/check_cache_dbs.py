@@ -22,6 +22,7 @@ async def check_redis_info(client=None):
                 "redis_version": info.get("redis_version"),
                 "uptime_in_seconds": info.get("uptime_in_seconds"),
                 "connected_clients": info.get("connected_clients"),
+                "used_memory": info.get("used_memory"),
                 "used_memory_human": info.get("used_memory_human"),
                 "total_connections_received": info.get("total_connections_received"),
                 "keyspace_hits": info.get("keyspace_hits"),

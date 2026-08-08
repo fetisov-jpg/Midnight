@@ -21,6 +21,7 @@
 
         .top-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
         .status-bar { display: flex; align-items: center; gap: 16px; font-size: 13px; color: #8b93a7; }
+        .status-bar { display: flex; align-items: center; gap: 16px; font-size: 13px; color: #8b93a7; }
         .ws-status { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 20px; background: #1a1e29; border: 1px solid #262a35; }
         .dot { width: 10px; height: 10px; border-radius: 50%; background: #f44336; }
         .dot.on { background: #4caf50; box-shadow: 0 0 8px #4caf50; }
@@ -35,21 +36,53 @@
         .btn.secondary { background: #262a35; color: #e6e6e6; }
         .btn.secondary:hover { background: #333a49; }
 
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; margin-top: 24px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; margin-top: 24px; position: relative; }
 
         .card {
             background: #161a24;
             border: 1px solid #262a35;
             border-radius: 12px;
             padding: 18px;
+            position: relative;
             transition: border-color .2s, transform .15s;
         }
         .card:hover { transform: translateY(-2px); }
         .card.refreshing { border-color: #7aa2ff; }
+        .card.absolute { position: absolute; margin: 0; z-index: 5; }
+        .card.absolute:hover, .card.dragging, .card.resizing { transform: none; }
+        .card.dragging { cursor: move; opacity: .9; z-index: 50; }
+        .card.resizing { user-select: none; }
+        .card.blocked { border-color: #ff6b6b; box-shadow: 0 0 0 1px #ff6b6b; }
+        .card.collapsed .card-body { display: none; }
+        .card.collapsed .icon,
+        .card.collapsed .db-desc,
+        .card.collapsed .card-actions { display: none; }
+        .card.collapsed .card-head { cursor: pointer; }
+        .card-body { overflow-y: auto; }
 
-        .card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+        .card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; cursor: move; }
+        .card-head:active { cursor: grabbing; }
         .card-head .icon { font-size: 20px; }
-        .card-head h2 { font-size: 16px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .card-title { flex: 1; overflow: hidden; min-width: 0; }
+        .card-title h2 { font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .db-desc { color: #8b93a7; font-size: 12px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .collapse-btn {
+            background: none; border: 1px solid #333a49; color: #8b93a7; cursor: pointer;
+            font-size: 11px; padding: 3px 8px; border-radius: 6px; line-height: 1.4;
+        }
+        .collapse-btn:hover { color: #7aa2ff; border-color: #7aa2ff; }
+
+        .resize-handle {
+            position: absolute; right: 0; bottom: 0; width: 16px; height: 16px;
+            cursor: nwse-resize; opacity: 0; transition: opacity .15s;
+        }
+        .card:hover .resize-handle { opacity: .6; }
+        .resize-handle::after {
+            content: ''; position: absolute; right: 3px; bottom: 3px;
+            width: 6px; height: 6px;
+            border-right: 2px solid #7aa2ff; border-bottom: 2px solid #7aa2ff;
+        }
         .card-head .status-dot { width: 12px; height: 12px; border-radius: 50%; background: #ff9800; flex-shrink: 0; }
         .card-head .status-dot.ok { background: #4caf50; box-shadow: 0 0 8px #4caf50; }
         .card-head .status-dot.err { background: #f44336; box-shadow: 0 0 8px #f44336; }
@@ -67,7 +100,7 @@
         .metric { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; padding-bottom: 8px; border-bottom: 1px dashed #232836; }
         .metric:last-child { border-bottom: none; padding-bottom: 0; }
         .metric .label { color: #8b93a7; }
-        .metric .value { font-family: 'Consolas', 'Menlo', monospace; color: #e6e6e6; font-weight: 600; }
+        .metric .value { font-family: 'Consolas', 'Menlo', monospace; color: #e6e6e6; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
 
         .error-msg { color: #ff6b6b; font-size: 12px; margin-top: 10px; word-break: break-word; }
 
@@ -98,6 +131,62 @@
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
         .form-error { color: #ff6b6b; font-size: 13px; margin-top: 10px; display: none; }
+
+        .card-actions { display: flex; gap: 4px; flex-shrink: 0; }
+        .details-btn {
+            background: none; border: 1px solid #333a49; color: #8b93a7; cursor: pointer;
+            font-size: 12px; padding: 3px 9px; border-radius: 6px; line-height: 1.4;
+        }
+        .details-btn:hover { color: #7aa2ff; border-color: #7aa2ff; }
+
+        .modal-lg { max-width: 980px; }
+        .details-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+        .details-head h3 { margin-bottom: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .close-btn {
+            background: none; border: none; color: #8b93a7; cursor: pointer;
+            font-size: 18px; line-height: 1; padding: 4px 8px; border-radius: 6px;
+        }
+        .close-btn:hover { color: #ff6b6b; background: rgba(255,107,107,.12); }
+
+        .details-body { display: flex; flex-direction: column; gap: 22px; }
+        .details-section h4 {
+            color: #8b93a7; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #262a35;
+        }
+        .details-section.error h4 { color: #ff6b6b; }
+        .details-error { color: #ff6b6b; font-size: 13px; }
+
+        .kv-table { width: 100%; border-collapse: collapse; }
+        .kv-table td { padding: 6px 10px; font-size: 13px; border-bottom: 1px dashed #232836; vertical-align: top; }
+        .kv-table td:first-child { color: #8b93a7; width: 38%; white-space: nowrap; }
+        .kv-table td:last-child { font-family: 'Consolas', 'Menlo', monospace; word-break: break-all; }
+
+        .table-wrap { overflow-x: auto; max-height: 340px; overflow-y: auto; border: 1px solid #262a35; border-radius: 8px; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .data-table th, .data-table td { padding: 6px 10px; text-align: left; border-bottom: 1px solid #232836; white-space: nowrap; }
+        .data-table th { position: sticky; top: 0; background: #1a1e29; color: #8b93a7; text-transform: uppercase; font-size: 11px; letter-spacing: .5px; }
+        .data-table td { font-family: 'Consolas', 'Menlo', monospace; }
+
+        .card.wide { grid-column: 1 / -1; }
+
+        .pg-metrics { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+        .pg-chip { background: #1a1e29; border: 1px solid #262a35; border-radius: 8px; padding: 7px 12px; min-width: 92px; }
+        .pg-chip b { display: block; font-size: 15px; font-family: 'Consolas', 'Menlo', monospace; }
+        .pg-chip span { color: #8b93a7; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; }
+
+        .card-tables { display: flex; flex-direction: column; gap: 16px; }
+        .card-table h4 { color: #8b93a7; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .card-table .table-wrap { max-height: 220px; }
+        .card-table .data-table th, .card-table .data-table td { padding: 4px 8px; font-size: 11px; white-space: normal; word-break: break-word; }
+        .card-empty { color: #5a6172; font-size: 12px; padding: 6px 0; }
+
+        .details-loading { color: #8b93a7; text-align: center; padding: 40px 0; font-size: 14px; }
+        .details-loading .spinner {
+            display: inline-block; width: 22px; height: 22px; border: 3px solid #333a49;
+            border-top-color: #7aa2ff; border-radius: 50%; animation: spin .8s linear infinite;
+            vertical-align: middle; margin-right: 10px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -134,6 +223,10 @@
                 <div class="form-row">
                     <label for="fName">Название</label>
                     <input id="fName" required placeholder="Например: Prod PostgreSQL #2">
+                </div>
+                <div class="form-row">
+                    <label for="fDesc">Описание</label>
+                    <input id="fDesc" placeholder="Например: основная БД продакшена">
                 </div>
                 <div class="form-row">
                     <label for="fType">Тип БД</label>
@@ -177,6 +270,19 @@
         </div>
     </div>
 
+    <!-- Модалка деталей подключения -->
+    <div class="overlay" id="detailsOverlay">
+        <div class="modal modal-lg">
+            <div class="details-head">
+                <h3 id="detailsTitle">Детали</h3>
+                <button class="close-btn" id="detailsClose" title="Закрыть">✕</button>
+            </div>
+            <div class="details-body" id="detailsBody">
+                <div class="details-loading"><span class="spinner"></span>Загрузка...</div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const TYPE_META = {
             postgres:  { label: 'PostgreSQL', icon: '🐘', port: 5432, user: true,  pass: true,  db: true,  dbLabel: 'База данных', dbPlaceholder: 'postgres', dbValue: 'postgres' },
@@ -186,11 +292,6 @@
         };
 
         const METRICS = {
-            postgres: [
-                { key: 'version', label: 'Версия' },
-                { key: 'active_connections', label: 'Активные подключения' },
-                { key: 'latency_ms', label: 'Отклик', format: v => v + ' мс' },
-            ],
             redis: [
                 { key: 'version', label: 'Версия' },
                 { key: 'connected_clients', label: 'Клиенты' },
@@ -215,42 +316,162 @@
             ],
         };
 
+        const PG_CHIPS = [
+            { key: 'version', label: 'Версия' },
+            { key: 'client_connections', label: 'Подключения' },
+            { key: 'active_queries', label: 'Активных запросов' },
+            { key: 'latency_ms', label: 'Отклик', format: v => v + ' мс' },
+        ];
+
+        const POSTGRES_TABLES = [
+            { key: 'active_requests', title: 'Активные запросы' },
+            { key: 'index_usage', title: 'Частота использования индексов' },
+            { key: 'top_tables', title: 'Самые используемые таблицы' },
+            { key: 'table_tree', title: 'Дерево таблиц' },
+        ];
+
+        const COLUMN_LABELS = {
+            pid: 'PID',
+            leader_pid: 'Лидер (PID)',
+            datid: 'База (OID)',
+            datname: 'База данных',
+            usesysid: 'Пользователь (OID)',
+            usename: 'Пользователь',
+            application_name: 'Приложение',
+            client_addr: 'Адрес клиента',
+            client_hostname: 'Хост клиента',
+            client_port: 'Порт клиента',
+            backend_start: 'Старт бэкенда',
+            xact_start: 'Старт транзакции',
+            query_start: 'Старт запроса',
+            state_change: 'Смена состояния',
+            wait_event_type: 'Тип ожидания',
+            wait_event: 'Событие ожидания',
+            state: 'Состояние',
+            backend_xid: 'XID',
+            backend_xmin: 'XMIN',
+            query_id: 'ID запроса',
+            query: 'Запрос',
+            backend_type: 'Тип бэкенда',
+            duration_s: 'Длительность, с',
+            duration: 'Длительность',
+            schemaname: 'Схема',
+            relname: 'Таблица',
+            table_name: 'Таблица',
+            tablename: 'Таблица',
+            index_name: 'Индекс',
+            indexname: 'Индекс',
+            indexdef: 'Определение индекса',
+            idx_scan: 'Сканирований по индексу',
+            idx_tup_read: 'Прочитано строк',
+            idx_tup_fetch: 'Выбрано из таблицы',
+            seq_scan: 'Последовательное сканирование',
+            n_tup_ins: 'Вставки',
+            n_tup_upd: 'Обновления',
+            n_tup_del: 'Удаления',
+            n_live_tup: 'Живых строк',
+            column_count: 'Количество колонок',
+            total_size_bytes: 'Размер',
+            columns: 'Колонки',
+            usesuper: 'Суперпользователь',
+            usecreatedb: 'Может создавать БД',
+            valuntil: 'Действует до',
+            viewname: 'Представление',
+            viewowner: 'Владелец',
+            definition: 'Определение',
+            matviewname: 'Материализованное представление',
+            matviewowner: 'Владелец',
+            tablespace: 'Табличное пространство',
+            hasindexes: 'Есть индексы',
+            ispopulated: 'Заполнено',
+            name: 'Имя',
+            default_version: 'Версия по умолчанию',
+            installed_version: 'Установленная версия',
+            comment: 'Комментарий',
+            value: 'Значение',
+        };
+
+        function colLabel(c) {
+            const ru = COLUMN_LABELS[c];
+            return ru ? `${c} (${ru})` : c;
+        }
+
         const grid = document.getElementById('grid');
         const empty = document.getElementById('empty');
         const wsDot = document.getElementById('wsDot');
         const wsText = document.getElementById('wsText');
         const lastUpdate = document.getElementById('lastUpdate');
         const cards = {};
+        const deletedIds = new Set();
 
         /* ---------- Карточки ---------- */
 
         function ensureCard(id, type, name) {
             if (cards[id]) return cards[id];
             const meta = TYPE_META[type] || { label: type, icon: '🗄️' };
+            const isPg = type === 'postgres';
             const metrics = METRICS[type] || [];
-            const card = { el: null, values: {}, dot: null, error: null };
+            const card = { el: null, values: {}, dot: null, error: null, isPg };
             const el = document.createElement('section');
-            el.className = 'card';
+            el.className = 'card' + (isPg ? ' wide' : '');
             el.innerHTML = `
                 <div class="card-head">
                     <span class="status-dot unknown"></span>
                     <span class="icon">${meta.icon}</span>
-                    <h2 class="db-name"></h2>
-                    <button class="del-btn" title="Удалить подключение">✕</button>
+                    <div class="card-title">
+                        <h2 class="db-name"></h2>
+                        <div class="db-desc"></div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="collapse-btn" title="Свернуть/развернуть">▾</button>
+                        <button class="details-btn" title="Детальная статистика">Детали</button>
+                        <button class="del-btn" title="Удалить подключение">✕</button>
+                    </div>
                 </div>
-                <div class="card-sub">${meta.label}</div>
-                <div class="metrics">
-                    ${metrics.map(m => `<div class="metric"><span class="label">${m.label}</span><span class="value" data-key="${m.key}">—</span></div>`).join('')}
+                <div class="card-body">
+                    <div class="card-sub">${meta.label}</div>
+                    ${isPg ? `
+                        <div class="pg-metrics"></div>
+                        <div class="card-tables"></div>
+                    ` : `
+                        <div class="metrics">
+                            ${metrics.map(m => `<div class="metric"><span class="label">${m.label}</span><span class="value" data-key="${m.key}">—</span></div>`).join('')}
+                        </div>
+                    `}
+                    <div class="error-msg" data-role="error" style="display:none;"></div>
                 </div>
-                <div class="error-msg" data-role="error" style="display:none;"></div>
+                <div class="resize-handle" title="Изменить размер"></div>
             `;
             card.el = el;
             card.nameEl = el.querySelector('.db-name');
+            card.descEl = el.querySelector('.db-desc');
             card.dot = el.querySelector('.status-dot');
             card.error = el.querySelector('[data-role="error"]');
             card.values = {};
             metrics.forEach(m => card.values[m.key] = el.querySelector(`[data-key="${m.key}"]`));
+            if (isPg) {
+                card.chips = {};
+                PG_CHIPS.forEach(ch => {
+                    const chip = document.createElement('div');
+                    chip.className = 'pg-chip';
+                    chip.innerHTML = `<b></b><span>${ch.label}</span>`;
+                    el.querySelector('.pg-metrics').appendChild(chip);
+                    card.chips[ch.key] = chip.querySelector('b');
+                });
+                card.tableEls = {};
+                POSTGRES_TABLES.forEach(sec => {
+                    const section = document.createElement('div');
+                    section.className = 'card-table';
+                    section.innerHTML = `<h4>${sec.title}</h4><div class="card-empty">—</div>`;
+                    el.querySelector('.card-tables').appendChild(section);
+                    card.tableEls[sec.key] = section.querySelector('div');
+                });
+            }
+            el.querySelector('.details-btn').addEventListener('click', () => openDetails(id));
             el.querySelector('.del-btn').addEventListener('click', () => deleteConnection(id));
+            el.querySelector('.collapse-btn').addEventListener('click', () => toggleCollapse(card));
+            el.querySelector('.card-head').addEventListener('pointerdown', (e) => startDrag(card, e));
+            el.querySelector('.resize-handle').addEventListener('pointerdown', (e) => startResize(card, e));
             grid.appendChild(el);
             cards[id] = card;
             updateEmptyState();
@@ -259,10 +480,12 @@
 
         function render(stats) {
             Object.keys(stats).forEach(id => {
+                if (deletedIds.has(id)) return;
                 const info = stats[id];
                 const type = info.type || 'unknown';
                 const card = ensureCard(id, type, info.name || id);
                 card.nameEl.textContent = info.name || id;
+                card.descEl.textContent = info.description || '';
 
                 const state = info.status === 'connected' ? 'ok' : info.status === 'error' ? 'err' : 'unknown';
                 card.dot.className = 'status-dot ' + state;
@@ -276,10 +499,14 @@
                 }
 
                 const metrics = info.metrics || {};
-                (METRICS[type] || []).forEach(m => {
-                    const raw = metrics[m.key];
-                    card.values[m.key].textContent = raw == null ? '—' : (m.format ? m.format(raw) : String(raw));
-                });
+                if (card.isPg) {
+                    renderPostgresCard(card, info);
+                } else {
+                    (METRICS[type] || []).forEach(m => {
+                        const raw = metrics[m.key];
+                        card.values[m.key].textContent = raw == null ? '—' : (m.format ? m.format(raw) : String(raw));
+                    });
+                }
 
                 card.el.classList.add('refreshing');
                 clearTimeout(card.el._t);
@@ -296,6 +523,140 @@
 
         function updateEmptyState() {
             empty.style.display = Object.keys(cards).length ? 'none' : '';
+        }
+
+        /* ---------- Перетаскивание, ресайз, сворачивание ---------- */
+
+        function toggleCollapse(card) {
+            const collapsed = card.el.classList.toggle('collapsed');
+            if (collapsed) {
+                card.el.style.height = 'auto';
+            } else {
+                card.el.style.height = '';
+            }
+        }
+
+        function toAbsolute(card) {
+            const el = card.el;
+            if (!el.classList.contains('absolute')) {
+                el.style.width = el.offsetWidth + 'px';
+                el.style.height = el.offsetHeight + 'px';
+                el.classList.add('absolute');
+            }
+        }
+
+        function rectsOverlap(a, b) {
+            return a.left < b.right && a.right > b.left
+                && a.top < b.bottom && a.bottom > b.top;
+        }
+
+        function collisionCard(card) {
+            const rect = card.el.getBoundingClientRect();
+            for (const id in cards) {
+                const other = cards[id];
+                if (other === card || !other.el || !other.el.isConnected) continue;
+                const o = other.el.getBoundingClientRect();
+                if (rectsOverlap(rect, o)) return other;
+            }
+            return null;
+        }
+
+        let dragState = null;
+
+        function startDrag(card, e) {
+            if (e.button !== 0 || e.target.closest('button')) return;
+            const el = card.el;
+            toAbsolute(card);
+            dragState = {
+                mode: 'move', card,
+                prev: { left: el.offsetLeft, top: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight },
+                startX: e.clientX, startY: e.clientY,
+            };
+            el.classList.add('dragging');
+            e.preventDefault();
+        }
+
+        function startResize(card, e) {
+            if (e.button !== 0) return;
+            const el = card.el;
+            toAbsolute(card);
+            dragState = {
+                mode: 'resize', card,
+                prev: { left: el.offsetLeft, top: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight },
+                startX: e.clientX, startY: e.clientY,
+            };
+            el.classList.add('resizing');
+            e.preventDefault();
+        }
+
+        window.addEventListener('pointermove', (e) => {
+            if (!dragState) return;
+            const s = dragState;
+            const dx = e.clientX - s.startX;
+            const dy = e.clientY - s.startY;
+            s.moved = Math.max(Math.abs(dx), Math.abs(dy));
+            const el = s.card.el;
+            if (s.mode === 'move') {
+                el.style.left = (s.prev.left + dx) + 'px';
+                el.style.top = (s.prev.top + dy) + 'px';
+                el.classList.toggle('blocked', !!collisionCard(s.card));
+            } else {
+                el.style.width = Math.max(280, s.prev.w + dx) + 'px';
+                el.style.height = Math.max(120, s.prev.h + dy) + 'px';
+                el.classList.toggle('blocked', !!collisionCard(s.card));
+            }
+        });
+
+        window.addEventListener('pointerup', () => {
+            const s = dragState;
+            if (!s) return;
+            const el = s.card.el;
+            el.classList.remove('blocked');
+            if (s.mode === 'move' && (s.moved || 0) < 6 && el.classList.contains('collapsed')) {
+                toggleCollapse(s.card);
+            } else if (collisionCard(s.card)) {
+                el.style.left = s.prev.left + 'px';
+                el.style.top = s.prev.top + 'px';
+                el.style.width = s.prev.w + 'px';
+                el.style.height = s.prev.h + 'px';
+            }
+            el.classList.remove('dragging', 'resizing');
+            dragState = null;
+        });
+
+        function renderPostgresCard(card, info) {
+            const metrics = info.metrics || {};
+            PG_CHIPS.forEach(ch => {
+                const raw = metrics[ch.key];
+                card.chips[ch.key].textContent = raw == null ? '—' : (ch.format ? ch.format(raw) : String(raw));
+            });
+            const tables = info.tables || {};
+            POSTGRES_TABLES.forEach(sec => {
+                const el = card.tableEls[sec.key];
+                const t = tables[sec.key];
+                if (!t) {
+                    el.className = 'card-empty';
+                    el.textContent = '—';
+                } else if (t.error) {
+                    el.className = 'card-empty';
+                    el.textContent = t.error;
+                } else if (!t.columns || !t.columns.length || !t.rows.length) {
+                    el.className = 'card-empty';
+                    el.textContent = 'Нет данных';
+                } else {
+                    el.className = '';
+                    el.innerHTML = tableHtml(t.columns, t.rows);
+                }
+            });
+        }
+
+        function tableHtml(columns, rows) {
+            const head = columns.map(c => `<th>${esc(colLabel(c))}</th>`).join('');
+            const body = rows.map(row => {
+                const tds = columns.map((c, i) => `<td>${fmtVal(row == null ? null : row[i])}</td>`).join('');
+                return `<tr>${tds}</tr>`;
+            }).join('');
+            return `<div class="table-wrap"><table class="data-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
         }
 
         /* ---------- WebSocket ---------- */
@@ -360,6 +721,7 @@
             const meta = TYPE_META[fType.value];
             const payload = {
                 name: document.getElementById('fName').value.trim(),
+                description: document.getElementById('fDesc').value.trim() || null,
                 type: fType.value,
                 host: document.getElementById('fHost').value.trim() || 'localhost',
                 port: parseInt(fPort.value, 10) || meta.port,
@@ -392,8 +754,94 @@
             const name = cards[id] ? cards[id].nameEl.textContent : id;
             if (!confirm(`Удалить подключение «${name}»?`)) return;
             try {
-                await fetch('/api/v1/connections/' + encodeURIComponent(id), { method: 'DELETE' });
-            } catch (e) { /* карточка исчезнет при следующем WS-обновлении */ }
+                const res = await fetch('/api/v1/connections/' + encodeURIComponent(id), { method: 'DELETE' });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    alert(err.detail || 'Ошибка удаления');
+                    return;
+                }
+            } catch (e) {
+                alert('Не удалось удалить подключение: ' + e.message);
+                return;
+            }
+            deletedIds.add(id);
+            if (cards[id]) {
+                cards[id].el.remove();
+                delete cards[id];
+            }
+            updateEmptyState();
+        }
+
+        /* ---------- Детали ---------- */
+
+        const detailsOverlay = document.getElementById('detailsOverlay');
+        const detailsTitle = document.getElementById('detailsTitle');
+        const detailsBody = document.getElementById('detailsBody');
+
+        document.getElementById('detailsClose').addEventListener('click', closeDetails);
+        detailsOverlay.addEventListener('click', (e) => { if (e.target === detailsOverlay) closeDetails(); });
+
+        function closeDetails() { detailsOverlay.classList.remove('open'); }
+
+        function esc(v) {
+            return String(v == null ? '' : v).replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+            })[ch]);
+        }
+
+        function fmtVal(v) {
+            if (v == null) return '—';
+            if (typeof v === 'object') return esc(JSON.stringify(v));
+            return esc(v);
+        }
+
+        function renderSection(section) {
+            if (section.kind === 'error') {
+                return `<div class="details-section error"><h4>${esc(section.title)}</h4><div class="details-error">${esc(section.message)}</div></div>`;
+            }
+            if (section.kind === 'table') {
+                const data = Array.isArray(section.data) ? section.data : [];
+                if (!data.length) {
+                    return `<div class="details-section"><h4>${esc(section.title)}</h4><div class="details-error">Нет данных</div></div>`;
+                }
+                const isObjRows = typeof data[0] === 'object';
+                let columns = ['value'];
+                if (isObjRows) {
+                    columns = [];
+                    data.forEach(r => Object.keys(r).forEach(k => { if (!columns.includes(k)) columns.push(k); }));
+                }
+                const rows = data.map(r => columns.map(c => (isObjRows ? r[c] : r)));
+                return `<div class="details-section"><h4>${esc(section.title)}</h4>${tableHtml(columns, rows)}</div>`;
+            }
+            const items = Object.entries(section.data || {});
+            if (!items.length) {
+                return `<div class="details-section"><h4>${esc(section.title)}</h4><div class="details-error">Нет данных</div></div>`;
+            }
+            const rows = items.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${fmtVal(v)}</td></tr>`).join('');
+            return `<div class="details-section"><h4>${esc(section.title)}</h4><table class="kv-table"><tbody>${rows}</tbody></table></div>`;
+        }
+
+        async function openDetails(id) {
+            const card = cards[id];
+            const name = (card && card.nameEl.textContent) || id;
+            detailsTitle.textContent = name;
+            detailsBody.innerHTML = '<div class="details-loading"><span class="spinner"></span>Загрузка...</div>';
+            detailsOverlay.classList.add('open');
+            try {
+                const res = await fetch('/api/v1/connections/' + encodeURIComponent(id) + '/details');
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.detail || ('Ошибка: ' + res.status));
+                }
+                const data = await res.json();
+                if (data.status === 'error' && data.message) {
+                    detailsBody.innerHTML = `<div class="details-section error"><h4>Ошибка подключения</h4><div class="details-error">${esc(data.message)}</div></div>`;
+                    return;
+                }
+                detailsBody.innerHTML = (data.sections || []).map(renderSection).join('');
+            } catch (e) {
+                detailsBody.innerHTML = `<div class="details-section error"><h4>Ошибка</h4><div class="details-error">${esc(e.message)}</div></div>`;
+            }
         }
 
         /* ---------- Форматтеры ---------- */
