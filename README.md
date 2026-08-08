@@ -1,6 +1,6 @@
 # Midnight API - Database Statistics Collector
 
-Приложение для сбора и отображения статистики по базам данных: PostgreSQL, Redis, Memcached.
+Приложение для сбора и отображения статистики по базам данных: PostgreSQL, Redis, Memcached, MongoDB.
 
 ## Установка зависимостей
 
@@ -34,6 +34,13 @@ cp .env.example .env
 #### Memcached
 - `MEMCACHE_HOST` - хост Memcached (по умолчанию: localhost)
 - `MEMCACHE_PORT` - порт Memcached (по умолчанию: 11211)
+
+#### MongoDB
+- `MONGO_HOST` - хост MongoDB (по умолчанию: localhost)
+- `MONGO_PORT` - порт MongoDB (по умолчанию: 27017)
+- `MONGO_USER` - пользователь (опционально)
+- `MONGO_PASSWORD` - пароль (опционально)
+- `MONGO_DB` - имя базы данных (по умолчанию: admin)
 
 ## Запуск приложения
 
@@ -76,6 +83,14 @@ uv run start
 - `GET /api/v1/memcache/config` - текущая конфигурация
 - `GET /api/v1/memcache/stats` - статистика Memcached
 
+### MongoDB
+- `GET /api/v1/mongo/` - основная страница
+- `GET /api/v1/mongo/ping` - проверка доступности
+- `GET /api/v1/mongo/config` - текущая конфигурация
+- `GET /api/v1/mongo/info` - полная статистика MongoDB
+- `GET /api/v1/mongo/databases` - список баз данных MongoDB
+- `GET /api/v1/mongo/stats` - статистика базы данных MongoDB
+
 ## Документация API
 
 После запуска приложения документация доступна по адресам:
@@ -89,15 +104,18 @@ src/
 ├── api/
 │   └── v1/
 │       ├── postgres_routes.py    # Роуты PostgreSQL
-│       └── cache_routes.py       # Роуты Redis и Memcached
+│       ├── cache_routes.py       # Роуты Redis и Memcached
+│       └── mongo_routes.py       # Роуты MongoDB
 ├── core/
 │   ├── config.py                 # Конфигурация всех БД
 │   ├── database.py               # Подключение к PostgreSQL
 │   ├── redis_db.py               # Подключение к Redis
-│   └── memcache_db.py            # Подключение к Memcached
+│   ├── memcache_db.py            # Подключение к Memcached
+│   └── mongo_db.py               # Подключение к MongoDB
 ├── repositories/
 │   ├── check_postgres.py         # Функции для PostgreSQL
-│   └── check_cache_dbs.py        # Функции для Redis и Memcached
+│   ├── check_cache_dbs.py        # Функции для Redis и Memcached
+│   └── check_mongo.py            # Функции для MongoDB
 └── main.py                       # Точка входа приложения
 ```
 
