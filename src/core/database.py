@@ -1,54 +1,38 @@
-import asyncpg
-<<<<<<< HEAD
-from dotenv import load_dotenv
 import os
-import pymongo
-from pymongo import AsyncMongoClient
-print("Current dir:", os.getcwd())
-print(".env exists:", os.path.exists(".env"))
+from typing import Optional
 
-# Явно указываем путь к .env для уверенности
-load_dotenv(dotenv_path=".env")
-load_dotenv()
+import asyncpg
+from dotenv import load_dotenv
 
-# Просто читаем переменные один раз при импорте
-POSTGRES_DB_HOST = os.getenv("POSTGRES_DB_HOST")
-POSTGRES_DB_PORT = os.getenv("POSTGRES_DB_PORT")
-POSTGRES_DB_USER = os.getenv("POSTGRES_DB_USER")
-POSTGRES_DB_PASS = os.getenv("POSTGRES_DB_PASS")
-POSTGRES_DB_NAME = os.getenv("POSTGRES_DB_NAME")
-=======
 from src.core.config import PostgresConfig
 
-# Создаем конфигурацию один раз при импорте
-postgres_config = PostgresConfig.from_env()
->>>>>>> d773aef9e0964c03aca947a1de58f3f9b1ba53d7
+load_dotenv()
 
-MONGO_DB_HOST = os.getenv("MONGO_DB_HOST", "localhost")
-MONGO_DB_PORT = int(os.getenv("MONGO_DB_PORT", 27017))  # ← Преобразуем в int
-MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "midnight")
+_pg_pool: Optional[asyncpg.Pool] = None
 
-async def get_db_conn_pg():
-    connection = await asyncpg.connect(
-        host=postgres_config.host,
-        port=postgres_config.port,
-        user=postgres_config.user,
-        password=postgres_config.password,
-        database=postgres_config.database
+
+def _build_pg_pool_kwargs() -> dict:
+    cfg = PostgresConfig.from_env()
+    return dict(
+        host=cfg.host,
+        port=cfg.port,
+        user=cfg.user,
+        password=cfg.password,
+        database=cfg.database,
+        min_size=1,
+        max_size=5,
     )
-    return connection
-<<<<<<< HEAD
-async def get_db_conn_mongo():
-    """Создает асинхронное соединение с MongoDB"""
-    client = AsyncMongoClient(
-        host=MONGO_DB_HOST,
-        port=MONGO_DB_PORT
-    )
-    return client
-=======
 
 
-def get_postgres_config() -> PostgresConfig:
-    """Возвращает текущую конфигурацию PostgreSQL"""
-    return postgres_config
->>>>>>> d773aef9e0964c03aca947a1de58f3f9b1ba53d7
+async def get_pg_pool() -> asyncpg.Pool:
+    global _pg_pool
+    if _pg_pool is None:
+        _pg_pool = await asyncpg.create_pool(**_build_pg_pool_kwargs())
+    return _pg_pool
+
+
+async def close_pg() -> None:
+    global _pg_pool
+    if _pg_pool is not None:
+        await _pg_pool.close()
+        _pg_pool = None

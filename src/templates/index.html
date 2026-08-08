@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DB Stats Monitor</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: #fff; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { text-align: center; color: #4caf50; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 30px; }
+        .card { background: #2d2d2d; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .card h2 { margin-top: 0; display: flex; align-items: center; gap: 10px; }
+        .status { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .status.ok { background: #4caf50; box-shadow: 0 0 8px #4caf50; }
+        .status.err { background: #f44336; box-shadow: 0 0 8px #f44336; }
+        .metric { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #444; }
+        .metric:last-child { border-bottom: none; }
+        .label { color: #aaa; }
+        .value { font-weight: bold; font-family: monospace; }
+        .loading { text-align: center; color: #aaa; margin-top: 50px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Мониторинг Баз Данных</h1>
+        <div id="loading" class="loading">Подключение к WebSocket...</div>
+        <div id="dashboard" class="grid" style="display:none;">
+            <!-- Карточки будут добавлены через JS -->
+        </div>
+    </div>
+
+    <script>
+        const dashboard = document.getElementById('dashboard');
+        const loading = document.getElementById('loading');
+        
+        const ws = new WebSocket(`ws://${location.host}/ws/stats`);
+
+        ws.onopen = () => {
+            loading.style.display = 'none';
+            dashboard.style.display = 'grid';
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            renderCards(data);
+        };
+
+        function renderCards(stats) {
+            dashboard.innerHTML = '';
+            const dbs = ['postgresql', 'redis', 'memcached'];
+            
+            dbs.forEach(db => {
+                const info = stats[db] || { status: 'unknown', metrics: {} };
+                const isOk = info.status === 'connected';
+                
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <h2>
+                        <span class="status ${isOk ? 'ok' : 'err'}"></span>
+                        ${db.toUpperCase()}
+                    </h2>
+                    <div class="metric"><span class="label">Статус:</span> <span class="value">${info.status}</span></div>
+                    <div class="metric"><span class="label">Время ответа:</span> <span class="value">${info.metrics.latency_ms || 'N/A'} мс</span></div>
+                    <div class="metric"><span class="label">Версия:</span> <span class="value">${info.metrics.version || 'N/A'}</span></div>
+                    ${db === 'redis' ? `<div class="metric"><span class="label">Использование памяти:</span> <span class="value">${info.metrics.used_memory_human || 'N/A'}</span></div>` : ''}
+                    ${db === 'postgresql' ? `<div class="metric"><span class="label">Подключений:</span> <span class="value">${info.metrics.numbackends || 'N/A'}</span></div>` : ''}
+                `;
+                dashboard.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
